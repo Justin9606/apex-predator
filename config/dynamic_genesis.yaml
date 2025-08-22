@@ -1,54 +1,61 @@
-# genesis dna — adaptive seeds for the data spine
-symbol: "XAUUSD"
-
+# config/dynamic_genesis.yaml
+# Real seed parameters for Void Genesis Overlord (VGOD) - mutates online via causal deltas in real_time_learning_engine.py
+# No hardcoding beyond initial seeds; all adapt on live ticks (e.g., vol ~0.009 Aug 20, 2025 XAUUSD)
+# MT5 credentials via env vars (os.environ.get) - NEVER stored here
+core:
+  version: "VGOD-1.0"
+  name: "Void Genesis Overlord"
+  symbol: "XAUUSD" # Primary; mutates on regime shifts
+capital:
+  starting: 200.0 # Seed for sim/live; mutates on P/L in risk_capital_tracker.py
+  target: 200000.0
+  risk_per_trade: 0.005 # Initial 0.5%; adapts on vol/entropy
+  min_profit_target: 0.001 # 0.1% seed; mutates on Skew divergence
+  compounding_amplification: 0.02 # Per cycle boost; deltas increase on wins
 modes:
+  default: "sim" # CLI override; sim for Mac real virtual trades
   sim:
-    # mac-friendly: use OANDA practice + your TradingView local bridge
-    sources:
-      - type: "oanda"
-        account: "practice" # or "live"
-        stream_url: "https://stream-fxpractice.oanda.com/v3/accounts/{ACCOUNT_ID}/pricing/stream"
-        rest_url: "https://api-fxpractice.oanda.com/v3"
-        account_id: "REPLACE_ME"
-        token_env: "OANDA_TOKEN" # read from env var
-        instruments: ["XAU_USD"]
-      - type: "tv_bridge"
-        ws_url: "ws://127.0.0.1:8765" # your local TV/OHLC bridge (you control it)
-        channels: ["orderbook", "trades", "quotes"]
+    data_sources: ["tradingview", "oanda"] # Real live scraps; no hist/fakes
+    capital_mode: "hardcoded" # Virtual P/L tracking on now-prices
   live:
-    # windows + MT5/brokers
-    sources:
-      - type: "mt5"
-        symbol: "XAUUSD"
-        poll_ms: 150 # adaptive; initial seed only
-      - type: "oanda"
-        account: "live"
-        stream_url: "https://stream-fxtrade.oanda.com/v3/accounts/{ACCOUNT_ID}/pricing/stream"
-        rest_url: "https://api-fxtrade.oanda.com/v3"
-        account_id: "REPLACE_ME"
-        token_env: "OANDA_TOKEN"
-        instruments: ["XAU_USD"]
-
-adaptive:
-  qos:
-    max_timestamp_delay_ms: 50 # drop events if older than this (present-only discipline)
-    max_jitter_ms: 25 # triggers resample/adapt if exceeded
-    heartbeat_ms: 500 # expected keepalive cadence per source
-    backoff:
-      min_ms: 250
-      max_ms: 4000
-      factor: 2.0
-  sampling:
-    base_hz: 10 # initial; will adapt with vol/jitter
-    min_hz: 2
-    max_hz: 50
-  fuse:
-    prefer_depth_levels: 10 # min L2 depth to accept as “rich” book
-    dedupe_horizon_ms: 20 # collapse near-dup ticks
-    clock_sync_slack_ms: 15 # tolerance across venues
-
-telemetry:
-  log_level: "INFO"
-  emit_book: true
-  emit_trades: true
-  emit_quotes: true
+    broker: "Fusion Markets" # Seed; switches on flaws >3 rejects
+    mt5_login: "" # Via env MT5_LOGIN
+    mt5_password: "" # Via env MT5_PASSWORD
+    mt5_server: "" # Via env MT5_SERVER
+    mt5_timeout_ms: 10000 # Seed; mutates on latency <20ms
+execution:
+  leverage_seed: 500 # Conf multiplier; caps/adapts on vol <0.01
+  min_order_size: 0.01 # Micro-lots seed; mutates on entropy std >0.015
+  max_order_size: 0.5 # Seed; adapts on Skew >12.7σ
+  slippage_tolerance: 0.1 # Pips seed; mutates on broker delays
+  iceberg_enabled: true
+  iceberg_slices: 100 # Seed; adapts on quiet regimes
+  tor_proxy_enabled: true
+  tor_ips: ["192.42.116.41:9050", "162.247.74.74:9050"] # Rotation seed
+deception:
+  wick_echo_ms: 20 # Seed for fork births; mutates on live QoS <10ms
+  genesis_threshold: 0.85 # Infection trigger seed; deltas on outcome
+  deception_cycle_ms: 50 # Cycle seed; adapts to <100ms on vol
+  liquidity_void_threshold: 0.05 # Seed; mutates on entropy >0.015
+  deception_amplification_factor: 1.2 # Per tick boost; deltas on wins
+neural:
+  initial_learning_rate: 0.001 # Seed; meta-mutates +0.1x per cycle
+  adaptation_window: 20 # Ticks seed; mutates on regime clusters
+  genesis_score_weights: [0.25, 0.25, 0.25, 0.25] # θ1-θ4 for G_t; adapts per tick
+  overwrite_efficiency: 0.1 # Seed for tr(∇O_g); mutates on overwrites
+learning:
+  recursion_depth_limit: 10 # Cycle seed; mutates on kills +1
+  data_quality_threshold: 0.9 # Feed purity seed; adapts on Skew
+  win_rate_initial: 0.6 # Seed; deltas +0.001 on reversals
+  risk_adaptation_step: 0.0001 # Per loss; mutates to minimize
+risk:
+  volatility_baseline: 0.009 # Seed from Aug 20; mutates on live vol
+  regime_clusters: 3 # Initial K; adapts via MiniBatch on wicks
+  max_leverage_cap: 500 # Seed; mutates down on vol <0.01
+logging:
+  log_level: "detailed" # Seed; switches to debug on losses
+  log_6w_enabled: true # Always; mutates format on cycles
+trading:
+  position_size_pct: 10 # Initial %; mutates on entropy/comeback_prob
+  typical_spread: 0.3 # Pips seed; adapts on broker snoop
+  round_number_interval: 5.0 # Trap seed; mutates on wick diffs
