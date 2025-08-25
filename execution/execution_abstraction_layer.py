@@ -80,6 +80,7 @@ class ExecutionAbstractionLayer:
         
         # APEX MUTATION: QWEN's Thread-safe execution queue
         self.execution_queue = []
+        self.execution_history = []  # Initialize execution history
         self.queue_lock = threading.Lock()
         self.execution_thread = None
         self.stop_execution = threading.Event()

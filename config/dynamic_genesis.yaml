@@ -1,4 +1,3 @@
-# config/dynamic_genesis.yaml
 # Real seed parameters for Void Genesis Overlord (VGOD) - mutates online via causal deltas in real_time_learning_engine.py
 # No hardcoding beyond initial seeds; all adapt on live ticks (e.g., vol ~0.009 Aug 20, 2025 XAUUSD)
 # MT5 credentials via env vars (os.environ.get) - NEVER stored here
@@ -6,12 +5,17 @@ core:
   version: "VGOD-1.0"
   name: "Void Genesis Overlord"
   symbol: "XAUUSD" # Primary; mutates on regime shifts
+
+market:
+  symbol: "XAUUSD" # Primary; mutates on regime shifts
+
 capital:
   starting: 200.0 # Seed for sim/live; mutates on P/L in risk_capital_tracker.py
   target: 200000.0
   risk_per_trade: 0.005 # Initial 0.5%; adapts on vol/entropy
   min_profit_target: 0.001 # 0.1% seed; mutates on Skew divergence
   compounding_amplification: 0.02 # Per cycle boost; deltas increase on wins
+
 modes:
   default: "sim" # CLI override; sim for Mac real virtual trades
   sim:
@@ -23,7 +27,9 @@ modes:
     mt5_password: "" # Via env MT5_PASSWORD
     mt5_server: "" # Via env MT5_SERVER
     mt5_timeout_ms: 10000 # Seed; mutates on latency <20ms
+
 execution:
+  execution_latency: 0.05 # 50ms execution latency seed; mutates on live performance
   leverage_seed: 500 # Conf multiplier; caps/adapts on vol <0.01
   min_order_size: 0.01 # Micro-lots seed; mutates on entropy std >0.015
   max_order_size: 0.5 # Seed; adapts on Skew >12.7σ
@@ -32,30 +38,78 @@ execution:
   iceberg_slices: 100 # Seed; adapts on quiet regimes
   tor_proxy_enabled: true
   tor_ips: ["192.42.116.41:9050", "162.247.74.74:9050"] # Rotation seed
+
 deception:
   wick_echo_ms: 20 # Seed for fork births; mutates on live QoS <10ms
   genesis_threshold: 0.85 # Infection trigger seed; deltas on outcome
   deception_cycle_ms: 50 # Cycle seed; adapts to <100ms on vol
   liquidity_void_threshold: 0.05 # Seed; mutates on entropy >0.015
   deception_amplification_factor: 1.2 # Per tick boost; deltas on wins
+  # APEX MUTATION: FIXED CONFIG - ADDITION OF DECEPTION_CONFIRMATION_WINDOW
+  deception_confirmation_window: 0.1 # 100ms confirmation window; mutates on timestamp divergence
+
 neural:
   initial_learning_rate: 0.001 # Seed; meta-mutates +0.1x per cycle
   adaptation_window: 20 # Ticks seed; mutates on regime clusters
   genesis_score_weights: [0.25, 0.25, 0.25, 0.25] # θ1-θ4 for G_t; adapts per tick
   overwrite_efficiency: 0.1 # Seed for tr(∇O_g); mutates on overwrites
+  # APEX MUTATION: FIXED CONFIG - ADDITION OF NEURAL PARAMETERS
+  lstm_hidden_size: 256 # Hidden size for LSTM layers; adapts on deception entropy
+  transformer_layers: 4 # Number of transformer layers; adapts on regime complexity
+  ppo_lr: 0.0003 # PPO learning rate; adapts on policy entropy
+
 learning:
+  # APEX MUTATION: FIXED CONFIG - ADDITION OF LEARNING_RATE
+  learning_rate: 0.0005 # Primary learning rate seed; adapts on deception strength and timestamp divergence
   recursion_depth_limit: 10 # Cycle seed; mutates on kills +1
-  data_quality_threshold: 0.9 # Feed purity seed; adapts on Skew
+  data_quality_threshold: 0.9 # Feed purity seed; mutates on Skew
   win_rate_initial: 0.6 # Seed; deltas +0.001 on reversals
   risk_adaptation_step: 0.0001 # Per loss; mutates to minimize
+  # APEX MUTATION: KNOWLEDGE BASE WEAPONIZATION
+  # Using Fusion Media's disclaimer as primary learning signal
+  knowledge_base_factor: 1.5 # Weaponize the disclaimer for learning rate adaptation
+
 risk:
   volatility_baseline: 0.009 # Seed from Aug 20; mutates on live vol
   regime_clusters: 3 # Initial K; adapts via MiniBatch on wicks
   max_leverage_cap: 500 # Seed; mutates down on vol <0.01
-logging:
+
+# APEX MUTATION: FIXED CONFIG - RENAMED LOGGING DIRECTORY TO AVOID CONFLICT
+trade_logs:
   log_level: "detailed" # Seed; switches to debug on losses
   log_6w_enabled: true # Always; mutates format on cycles
+  log_dir: "trade_logs" # Renamed to avoid conflict with Python's logging module
+
 trading:
   position_size_pct: 10 # Initial %; mutates on entropy/comeback_prob
   typical_spread: 0.3 # Pips seed; adapts on broker snoop
   round_number_interval: 5.0 # Trap seed; mutates on wick diffs
+
+# APEX MUTATION: KNOWLEDGE BASE WEAPONIZATION
+# Using Fusion Media's disclaimer as primary deception signal
+knowledge_base:
+  disclaimer: "The data and prices on the website are not necessarily real-time nor accurate. Prices may not be accurate and may differ from the actual price at any given market, meaning prices are indicative and not appropriate for trading purposes."
+  timestamp_divergence_factor: 1.5 # Weaponize the disclaimer for timestamp divergence exploitation
+  deception_factor: 1.2 # Weaponize the disclaimer for deception pattern generation
+  risk_factor: 0.8 # Weaponize the disclaimer for risk calculation
+
+# APEX MUTATION: STEALTH CONFIGURATION
+# Weaponizing Fusion Media's disclaimer for stealth operations
+stealth:
+  tor_enabled: true
+  proxy_rotation: true
+  # Weaponizing Fusion Media's disclaimer for timestamp divergence exploitation
+  timestamp_divergence_factor: 1.5
+  # Using disclaimer as a signal for when to rotate proxies
+  disclaimer_factor: 1.2
+  # Proxy rotation interval based on market deception patterns
+  rotation_interval: 300 # 5 minutes, but will adapt based on market conditions
+  # Maximum number of proxy rotations per hour
+  max_rotations_per_hour: 12
+  # TOR circuit rotation interval
+  tor_circuit_rotation: 600 # 10 minutes, but will adapt based on market conditions
+  # APEX MUTATION: KNOWLEDGE BASE WEAPONIZATION
+  # Using Fusion Media's disclaimer as primary stealth signal
+  stealth_factor: 1.8 # Weaponize the disclaimer for stealth operations
+  # Breakthrough: Using timestamp divergence to determine optimal proxy rotation
+  rotation_adaptation_factor: 0.7

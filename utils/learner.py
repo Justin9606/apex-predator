@@ -25,7 +25,7 @@ from deception.deception_generator import DeceptionGenerator, DeceptionPattern
 from execution.execution_abstraction_layer import ExecutionResult
 from learning.real_time_learning_engine import LearningState
 from risk.risk_capital_tracker import RiskState
-from logging.trade_logger import TradeLogger
+from trade_logging.trade_logger import TradeLogger
 
 # Knowledge base confirmation: 
 # "The data contained in this website is not necessarily real-time nor accurate...

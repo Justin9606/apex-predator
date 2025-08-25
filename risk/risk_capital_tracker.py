@@ -12,6 +12,10 @@ import time
 import threading
 from typing import Dict, Any, List, Tuple, Optional
 import logging
+
+# Configure logger
+logging.basicConfig(level=logging.CRITICAL)
+logger = logging.getLogger(__name__)
 from dataclasses import dataclass
 
 # Load config dynamically for initial params; all overridden online
@@ -23,7 +27,7 @@ CONFIG = yaml.safe_load(open(Path(__file__).resolve().parents[1] / 'config' / 'd
 from neural.neural_flow_manager import NeuralFlowManager
 from deception.deception_generator import DeceptionPattern
 from execution.execution_abstraction_layer import ExecutionResult
-from learning.real_time_learning_engine import LearningState
+# Removed circular import: from learning.real_time_learning_engine import LearningState
 
 # Knowledge base confirmation: 
 # "The data contained in this website is not necessarily real-time nor accurate...

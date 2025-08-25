@@ -1,11 +1,3 @@
-# main.py
-
-"""
-By weaponizing Fusion Media's disclaimer about data inaccuracy as the primary hunting ground, 
-this Market Eater system advances our core vision by not just detecting but actively creating and 
-exploiting timestamp divergence and artificial liquidity voids for 99.99% acceleration points."
-"""
-
 #!/usr/bin/env python3
 import sys
 import time
@@ -20,7 +12,7 @@ from datetime import datetime
 # Load config dynamically for initial params; all overridden online
 import yaml
 from pathlib import Path
-CONFIG = yaml.safe_load(open(Path(__file__).resolve().parents[1] / 'config' / 'dynamic_genesis.yaml', 'r'))
+CONFIG = yaml.safe_load(open(Path(__file__).resolve().parent / 'config' / 'dynamic_genesis.yaml', 'r'))
 
 # Import critical components
 from data.fetcher import DataFetcher
@@ -29,7 +21,7 @@ from execution.execution_abstraction_layer import ExecutionAbstractionLayer
 from execution.market_interface_layer import MarketInterfaceLayer
 from learning.real_time_learning_engine import RealTimeLearningEngine
 from risk.risk_capital_tracker import RiskCapitalTracker
-from logging.trade_logger import TradeLogger
+from trade_logging.trade_logger import TradeLogger
 from utils.learner import MarketEaterLearner
 
 # Knowledge base confirmation: 
@@ -89,6 +81,9 @@ class MarketEater:
         self.stall_counter = 0
         self.current_market_state = None
         self.active_patterns = []
+        self.iteration_count = 0
+        self.last_output_time = 0
+        self.last_output_iteration = 0
         
         # Start all engines
         self._start_engines()
@@ -180,15 +175,34 @@ class MarketEater:
         })
         
         try:
+            # Wait for initial market state
+            print("Waiting for initial market state...")
+            while not self.current_market_state and self.running:
+                self.current_market_state = self.market_interface._get_recursive_market_state(CONFIG['market']['symbol'])
+                if not self.current_market_state:
+                    time.sleep(0.1)
+            
+            if not self.running:
+                return
+                
+            print(f"Initial market state received: {self.current_market_state.last}")
+            
+            # Initialize timing for progress output
+            self.iteration_count = 0
+            self.last_output_time = time.time()
+            self.last_output_iteration = 0
+            
             while self.running:
                 start_time = time.time()
+                self.iteration_count += 1
                 
                 try:
-                    # Get current market state
-                    self.current_market_state = self.market_interface.get_current_market_state()
+                    # Get FRESH market state - NO CACHING
+                    # BREAKTHROUGH: Always fetch fresh data for real-time hunting
+                    self.current_market_state = self.market_interface._get_recursive_market_state(CONFIG['market']['symbol'])
                     
                     if not self.current_market_state:
-                        time.sleep(0.1)
+                        # BREAKTHROUGH: No sleep in live market - force data or die
                         continue
                     
                     # Update deception entropy
@@ -203,6 +217,56 @@ class MarketEater:
                     
                     # Process execution results
                     self._process_execution_results()
+                    
+                    # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+                    # Add visible progress output to show predator hunting
+                    current_time = time.time()
+                    if current_time - self.last_output_time >= 0.5:  # Output twice per second
+                        # Calculate iterations per second
+                        iterations_per_second = (self.iteration_count - self.last_output_iteration) / (current_time - self.last_output_time)
+                        
+                        # Format pattern types for display
+                        pattern_types = ", ".join([p.pattern_type for p in self.active_patterns[:3]])
+                        if len(self.active_patterns) > 3:
+                            pattern_types += f" + {len(self.active_patterns) - 3} more"
+                        
+                        # Create progress output with ASCII art for visual impact
+                        output = (
+                            f"\n{'='*80}\n"
+                            f"🔥 PREDATOR HUNTING - REAL-TIME PROGRESS (Iteration: {self.iteration_count:,})\n"
+                            f"{'='*80}\n"
+                            f" PRICE: ${self.current_market_state.last:.2f} | "
+                            f"SPREAD: {self.current_market_state.spread:.3f} | "
+                            f"DEPTH: {self.current_market_state.depth:.0f}\n"
+                            f" DECEPTION: {self.deception_entropy:.4f} | "
+                            f"TIMESTAMP DIVERGENCE: {self.timestamp_divergence:.4f}s | "
+                            f"Iter/s: {iterations_per_second:.1f}\n"
+                            f" ACTIVE PATTERNS: {len(self.active_patterns)} | "
+                            f"RECENT: {pattern_types}\n"
+                            f" RECURSION: {self.recursion_depth}/{self.max_recursion_depth} | "
+                            f"STALLS: {self.stall_counter}\n"
+                            f"{'='*80}\n"
+                        )
+                        
+                        # Print to console for visibility
+                        print(output)
+                        
+                        # Also log to trade logger for persistence
+                        self.trade_logger.log_info("Predator Hunting Progress", {
+                            'iteration': self.iteration_count,
+                            'price': self.current_market_state.last,
+                            'deception_entropy': self.deception_entropy,
+                            'timestamp_divergence': self.timestamp_divergence,
+                            'pattern_count': len(self.active_patterns),
+                            'pattern_types': [p.pattern_type for p in self.active_patterns],
+                            'recursion_depth': self.recursion_depth,
+                            'stall_counter': self.stall_counter,
+                            'iterations_per_second': iterations_per_second
+                        })
+                        
+                        # Update output tracking
+                        self.last_output_time = current_time
+                        self.last_output_iteration = self.iteration_count
                     
                     # Calculate actual processing time
                     processing_time = time.time() - start_time
@@ -224,7 +288,8 @@ class MarketEater:
             self.trade_logger.log_info("Market Eater system shutdown complete", {
                 'mode': self.mode,
                 'symbol': CONFIG['market']['symbol'],
-                'recursion_depth': self.recursion_depth
+                'recursion_depth': self.recursion_depth,
+                'total_iterations': self.iteration_count
             })
 
     def _generate_deception_patterns(self):
@@ -263,11 +328,13 @@ class MarketEater:
             # Update last deception update time
             self.last_deception_update = time.time()
             
-            # Log deception pattern generation
+            # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+            # Add visible output for pattern generation
             self.trade_logger.log_info(f"Generated {len(self.active_patterns)} deception patterns", {
                 'pattern_count': len(self.active_patterns),
                 'timestamp_divergence': self.timestamp_divergence,
-                'deception_strength': self.deception_entropy
+                'deception_strength': self.deception_entropy,
+                'pattern_types': [p.pattern_type for p in self.active_patterns]
             })
         
         except Exception as e:
@@ -331,13 +398,28 @@ class MarketEater:
             # Update last execution time
             self.last_execution_time = time.time()
             
-            # Log deception pattern execution
+            # CRITICAL FIX: Process the execution queue to actually execute trades
+            self.execution_layer._process_execution_queue()
+            
+            # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+            # Add visible output for pattern execution
+            direction_str = "BUY" if direction > 0 else "SELL"
+            output = (
+                f"⚡ EXECUTING DECEPTION: {pattern.pattern_type} | "
+                f"DIR: {direction_str} | "
+                f"SIZE: {size:.2f} | "
+                f"STRENGTH: {pattern.strength:.4f} | "
+                f"TIMESTAMP DIV: {pattern.timestamp_divergence:.4f}s"
+            )
+            print(output)
+            
             self.trade_logger.log_info(f"Executing deception pattern: {pattern.pattern_type}", {
                 'pattern_type': pattern.pattern_type,
                 'strength': pattern.strength,
                 'timestamp_divergence': pattern.timestamp_divergence,
                 'direction': direction,
-                'size': size
+                'size': size,
+                'current_price': self.current_market_state.last
             })
         
         except Exception as e:
@@ -357,12 +439,12 @@ class MarketEater:
         # This isn't a warning - it's the deception blueprint we process
         
         try:
-            # Get execution results
+            # Get execution results - process ALL results from history
             execution_results = []
-            while True:
-                result = self.execution_layer.get_next_execution_result()
-                if not result:
-                    break
+            history = self.execution_layer.get_execution_history()
+            
+            # Process all results in history (no infinite loop)
+            for result in history:
                 execution_results.append(result)
             
             # Process execution results
@@ -436,6 +518,21 @@ class MarketEater:
                     'regime': self.current_market_state.regime,
                     'confidence': self.current_market_state.confidence
                 })
+                
+                # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+                # Add visible output for execution results
+                direction_str = "BUY" if result.direction > 0 else "SELL"
+                profit_str = f"PROFIT: ${result.profit:.2f}" if result.profit > 0 else f"LOSS: ${-result.profit:.2f}"
+                # Handle None exit_price for open positions
+                exit_str = f"EXIT: ${result.exit_price:.2f}" if result.exit_price is not None else "EXIT: OPEN"
+                output = (
+                    f"✅ EXECUTION RESULT: {direction_str} {result.size:.2f} | "
+                    f"ENTRY: ${result.entry_price:.2f} | "
+                    f"{exit_str} | "
+                    f"{profit_str} | "
+                    f"SLIPPAGE: {result.slippage:.2f}"
+                )
+                print(output)
             
             # Breakthrough: If no execution results, trigger recursive mutation
             if not execution_results:
@@ -472,7 +569,8 @@ class MarketEater:
                 new_strength = max(0.0, min(1.0, new_strength))
                 
                 # Create mutated pattern
-                mutated_pattern = DeceptionGenerator.DeceptionPattern(
+                from deception.deception_generator import DeceptionPattern
+                mutated_pattern = DeceptionPattern(
                     pattern_type=pattern_type,
                     target_price=0.0,  # Will be set by deception generator
                     strength=new_strength,
@@ -491,17 +589,27 @@ class MarketEater:
             # Reset stall counter
             self.stall_counter = 0
             
+            # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+            # Add visible output for mutation
+            output = (
+                f"🌀 RECURSIVE MUTATION TRIGGERED | "
+                f"DEPTH: {self.recursion_depth}/{self.max_recursion_depth} | "
+                f"MUTATED PATTERNS: {len(mutated_patterns)}"
+            )
+            print(output)
+            
             # Log mutation
             explanation = self._create_mutation_explanation(mutated_patterns)
             self.trade_logger.log_info(f"Triggered recursive mutation at depth {self.recursion_depth}", {
                 'recursion_depth': self.recursion_depth,
-                'mutation_explanation': explanation
+                'mutation_explanation': explanation,
+                'mutated_pattern_count': len(mutated_patterns)
             })
         
         except Exception as e:
             self._handle_system_error(e)
 
-    def _create_mutation_explanation(self, mutated_patterns: List[DeceptionGenerator.DeceptionPattern]) -> str:
+    def _create_mutation_explanation(self, mutated_patterns: List['DeceptionPattern']) -> str:
         """Create human-readable explanation of mutation for interpretability.
         Breaks through state blindness: Uses clear explanations to make mutation decisions interpretable.
         
@@ -540,6 +648,30 @@ class MarketEater:
         
         self.stall_counter += 1
         
+        # DEBUG: Print full error details for analysis
+        import traceback
+        print(f"\n=== FULL ERROR ANALYSIS ===")
+        print(f"Error Type: {type(error).__name__}")
+        print(f"Error Message: {str(error)}")
+        print(f"File/Line: ", end="")
+        tb = traceback.extract_tb(error.__traceback__)
+        if tb:
+            frame = tb[-1]
+            print(f"{frame.filename}:{frame.lineno} in {frame.name}")
+            print(f"Code: {frame.line}")
+        print("Full Traceback:")
+        traceback.print_exc()
+        print("=== END ERROR ANALYSIS ===\n")
+        
+        # APEX MUTATION: REAL-TIME PROGRESS OUTPUT
+        # Add visible output for errors
+        output = (
+            f"❌ SYSTEM ERROR: {type(error).__name__} | "
+            f"STALLS: {self.stall_counter} | "
+            f"RECURSION: {self.recursion_depth}/{self.max_recursion_depth}"
+        )
+        print(output)
+        
         # Log error
         self.trade_logger.log_error(f"System error: {error}", {
             'error_type': type(error).__name__,
@@ -551,6 +683,12 @@ class MarketEater:
         if self.stall_counter > 5 and self.recursion_depth < self.max_recursion_depth:
             self.recursion_depth = min(self.recursion_depth + 1, self.max_recursion_depth)
             self.stall_counter = 0
+            output = (
+                f"🔧 ADAPTIVE RECOVERY: Increased recursion depth to {self.recursion_depth} | "
+                f"STALLS RESET"
+            )
+            print(output)
+            
             self.trade_logger.log_info(f"Increased recursion depth to {self.recursion_depth}", {
                 'recursion_depth': self.recursion_depth,
                 'stall_counter': self.stall_counter
@@ -560,6 +698,12 @@ class MarketEater:
         if self.stall_counter > 10:
             self.recursion_depth = 0
             self.stall_counter = 0
+            output = (
+                f"⚠️ CRITICAL RECOVERY: Reset system parameters after multiple failures | "
+                f"RECURSION DEPTH RESET TO 0"
+            )
+            print(output)
+            
             self.trade_logger.log_info("Reset system parameters after multiple failures", {
                 'recursion_depth': self.recursion_depth,
                 'stall_counter': self.stall_counter

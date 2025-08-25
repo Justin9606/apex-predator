@@ -15,6 +15,11 @@ from typing import Dict, Any, List, Tuple, Optional, Callable
 import logging
 from dataclasses import dataclass
 
+# Configure logging
+logging.basicConfig(level=logging.CRITICAL)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
+
 # Load config dynamically for initial params; all overridden online
 import yaml
 from pathlib import Path
