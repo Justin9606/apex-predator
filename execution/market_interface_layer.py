@@ -178,10 +178,10 @@ class MarketInterfaceLayer:
                     return None
                 market_data = market_data_dict  # Keep dict for MarketState creation
                 # Get real DataFrame for neural processing
-                market_df = self.fetcher._fetch_tradingview_data(symbol, count=100)
+                market_df = self.fetcher._fetch_mt5_ticks(symbol, count=100)
             else:
                 # For sim mode, get REAL TradingView DataFrame directly
-                market_df = self.fetcher._fetch_tradingview_data(symbol, count=100)
+                market_df = self.fetcher._fetch_sim_data(symbol, count=100)
                 if market_df is None or market_df.empty:
                     return None
             
@@ -200,7 +200,12 @@ class MarketInterfaceLayer:
                 current_timestamp = time.time()
             
             # REAL PRICE EXTRACTION - NO FAKE PRICES
-            current_price = market_df['close'].iloc[-1] if 'close' in market_df else market_df.iloc[-1].values[0]
+            if 'close' in market_df.columns:
+                current_price = market_df['close'].iloc[-1]
+            elif 'price' in market_df.columns:
+                current_price = market_df['price'].iloc[-1]
+            else:
+                current_price = market_df.iloc[-1].values[0]
             
             # Real-time price tracking (debug removed for clean output)
             

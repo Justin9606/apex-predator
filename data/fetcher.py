@@ -605,7 +605,7 @@ class DataFetcher:
         # Generate quantum data using deception tensor
         for i in range(count):
             # Create quantum state
-            quantum_seed = float(deception_dna[i*2:(i+1)*2], 16) / 255.0
+            quantum_seed = int(deception_dna[i*2:(i+1)*2], 16) / 255.0
             
             # Apply quantum fluctuations
             price_fluctuation = quantum_seed * 0.5 - 0.25
